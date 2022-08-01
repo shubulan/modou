@@ -19,6 +19,8 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 add_library(modou
     "${PROJECT_SOURCE_DIR}/src/EventLoop.cc"
+    "${PROJECT_SOURCE_DIR}/src/Channel.cc"
+    "${PROJECT_SOURCE_DIR}/src/Poller.cc"
     )
 target_include_directories(modou PUBLIC
                            "${PROJECT_SOURCE_DIR}/include"
@@ -41,5 +43,11 @@ target_include_directories(Test01 PUBLIC
 add_executable(Test02 test/test02.cc)
 target_link_libraries(Test02 PUBLIC "${LIBS}")
 target_include_directories(Test02 PUBLIC
+                           "${PROJECT_SOURCE_DIR}/include"
+                           )
+
+add_executable(Test10 test/test10.cc)
+target_link_libraries(Test10 PUBLIC "${LIBS}")
+target_include_directories(Test10 PUBLIC
                            "${PROJECT_SOURCE_DIR}/include"
                            )

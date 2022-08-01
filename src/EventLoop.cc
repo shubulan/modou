@@ -1,5 +1,7 @@
 #include "EventLoop.h"
 
+#include "Channel.h"
+#include "Poller.h"
 #include "Thread.h"
 #include "log.h"
 namespace modou {
@@ -16,13 +18,23 @@ void EventLoop::abortTwoLoopInThread() {
   exit(1);
 }
 
-EventLoop::EventLoop() : looping_(false), threadId_(CurrentThread::tid()) {
+EventLoop::EventLoop()
+    : threadId_(CurrentThread::tid()),
+      looping_(false),
+      quit_(false),
+      poller_(std::make_shared<Poller>(this)) {
   info("EventLoop created {} in thread: {}", fmt::ptr(this), threadId_);
   if (t_loopInThisThread) {
     abortTwoLoopInThread();
   } else {
     t_loopInThisThread = this;
   }
+}
+
+void EventLoop::updateChannel(Channel* channel) {
+  assert(channel->ownerLoop() == this);
+  assertInLoopThread();
+  poller_->updateChannel(channel);
 }
 
 EventLoop::~EventLoop() {
@@ -33,9 +45,15 @@ void EventLoop::loop() {
   assert(!looping_);
   assertInLoopThread();
   looping_ = true;
-
-  sleep(5);
-
+  quit_ = false;
+  while (!quit_) {
+    activeChannels_.clear();
+    poller_->poll(500, &activeChannels_);
+    for (auto it = activeChannels_.begin(); it != activeChannels_.end(); ++it) {
+      (*it)->handleEvent();
+    }
+  }
+  trace("EventLoop {} stop looping", fmt::ptr(this));
   looping_ = false;
 }
 }  // namespace modou
